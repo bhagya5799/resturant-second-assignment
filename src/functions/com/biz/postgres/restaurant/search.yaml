@@ -1,0 +1,46 @@
+summary: Fetch Restaurants by Location and Coupon Code
+tasks:
+  - id: step1_switch
+    fn: com.gs.switch
+    value: |
+        <js%
+          const key = Object.keys(inputs.body)
+          if (key[0]=="location"){
+            return "location"
+          }
+          if(key[0]=="couponCode"){
+            return "couponCode"
+          }
+        %>
+    cases:
+      location:
+        id: location
+        fn: com.gs.datastore
+        args:
+          datasource: postgres
+          data:
+            where:
+              location:
+                contains: <% inputs.body.location %>
+            include:
+              menuItems: true,
+          config:
+            method: Restaurant.findMany
+      couponCode:
+        id: coupon_code
+        fn: com.gs.datastore
+        args:
+          datasource: postgres
+          data:
+            where:
+              menuItems:
+                some: { couponCode: { equals: <% inputs.body.couponCode %> } }
+            include:
+              menuItems: true
+          config:
+            method: Restaurant.findMany
+    defaults:
+      id: default
+      fn: com.gs.return
+      args: <%inputs.body.default_return_val%>
+
